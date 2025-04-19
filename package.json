@@ -59,6 +59,7 @@
     "file-saver": "^2.0.5",
     "firebase": "^11.6.0",
     "firebase-admin": "^11.11.1",
+    "formidable": "^3.5.3",
     "input-otp": "^1.4.2",
     "lucide-react": "^0.488.0",
     "multer": "^1.4.5-lts.1",

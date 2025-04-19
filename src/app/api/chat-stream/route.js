@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { Readable } from 'stream';
 import { exec } from 'child_process';
+import { sessionStorage } from '../upload-pdf/route';
 
 export const dynamic = 'force-dynamic';
 
@@ -25,7 +26,7 @@ function nodeStreamToWeb(nodeStream) {
 }
 
 export async function POST(request) {
-  const { message, manualId, lang = 'en' } = await request.json();
+  const { message, manualId, pdfSessionId, lang = 'en' } = await request.json();
 
   // Validate language parameter
   const validLang = ['en', 'de', 'fr'].includes(lang) ? lang : 'en';
@@ -43,14 +44,42 @@ export async function POST(request) {
       read() {} // Implementation required but we don't need to do anything here
     });
 
+    // Check if we're in a PDF chat session
+    let pdfContext = '';
+    let pdfFileName = '';
+    if (pdfSessionId && sessionStorage.has(pdfSessionId)) {
+      const pdfData = sessionStorage.get(pdfSessionId);
+      pdfContext = pdfData.text || '';
+      pdfFileName = pdfData.fileName || 'document.pdf';
+      console.log(`Using PDF session for ${pdfFileName}`);
+    }
+
     // Process function to generate chunks of text over time
     const processStream = async () => {
       try {
         // Escape the question to prevent command injection
         const escapedQuestion = message.replace(/["\\]/g, '\\$&');
         
+        let pythonCommand = `python scripts/deepseek_stream.py "${escapedQuestion}" "${validLang}" ${manualId || ''}`;
+        
+        // Add PDF context if available
+        if (pdfContext) {
+          // Start with PDF info indicator in the response
+          if (validLang === 'de') {
+            stream.push(`Unter Verwendung von Informationen aus "${pdfFileName}":\n\n`);
+          } else if (validLang === 'fr') {
+            stream.push(`En utilisant les informations de "${pdfFileName}":\n\n`);
+          } else {
+            stream.push(`Using information from "${pdfFileName}":\n\n`);
+          }
+          
+          // Pass PDF context to the Python script (first 2000 chars to avoid command line issues)
+          const contextPreview = pdfContext.substring(0, 2000).replace(/["\\]/g, '\\$&');
+          pythonCommand += ` --context="${contextPreview}"`;
+        }
+        
         // Use our local DeepSeek stream script with language parameter
-        const pythonProcess = exec(`python scripts/deepseek_stream.py "${escapedQuestion}" "${validLang}" ${manualId || ''}`);
+        const pythonProcess = exec(pythonCommand);
         
         // Pipe the output directly to our stream
         pythonProcess.stdout.on('data', (data) => {

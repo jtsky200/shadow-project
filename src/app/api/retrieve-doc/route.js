@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { promises as fs } from 'fs';
 import path from 'path';
 import { OpenAI } from 'openai';
-import pdfSessions from '@/app/lib/pdfSessions';
+import { sessionStorage } from '../upload-pdf/route';
 
 // Configure OpenAI
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
@@ -36,8 +36,8 @@ export async function POST(request) {
     const queryEmbedding = embeddingResponse.data[0].embedding;
     
     // First check if we should use a user-uploaded PDF
-    if (sessionId && pdfSessions.has(sessionId)) {
-      const pdfData = pdfSessions.get(sessionId);
+    if (sessionId && sessionStorage.has(sessionId)) {
+      const pdfData = sessionStorage.get(sessionId);
       if (pdfData.embedding) {
         const similarity = cosineSimilarity(queryEmbedding, pdfData.embedding);
         if (similarity > threshold) {

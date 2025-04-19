@@ -4,7 +4,7 @@ import { exec } from "child_process";
 import { promisify } from "util";
 import path from "path";
 import fs from "fs/promises";
-import pdfSessions from '@/app/lib/pdfSessions';
+import { sessionStorage } from '../upload-pdf/route';
 
 const execPromise = promisify(exec);
 
@@ -44,8 +44,8 @@ export async function POST(request) {
       
       try {
         // Check if we're in a PDF chat session
-        if (pdfSessionId && pdfSessions.has(pdfSessionId)) {
-          const pdfData = pdfSessions.get(pdfSessionId);
+        if (pdfSessionId && sessionStorage.has(pdfSessionId)) {
+          const pdfData = sessionStorage.get(pdfSessionId);
           console.log(`Using PDF session for ${pdfData.fileName}`);
         }
         
@@ -58,8 +58,8 @@ export async function POST(request) {
         let response = stdout.trim();
         
         // If PDF session exists, prepend context info
-        if (pdfSessionId && pdfSessions.has(pdfSessionId)) {
-          const pdfData = pdfSessions.get(pdfSessionId);
+        if (pdfSessionId && sessionStorage.has(pdfSessionId)) {
+          const pdfData = sessionStorage.get(pdfSessionId);
           
           // Use language-specific message
           if (validLang === 'de') {
@@ -89,8 +89,8 @@ export async function POST(request) {
     let context = "";
 
     // Check for PDF session first
-    if (pdfSessionId && pdfSessions.has(pdfSessionId)) {
-      const pdfData = pdfSessions.get(pdfSessionId);
+    if (pdfSessionId && sessionStorage.has(pdfSessionId)) {
+      const pdfData = sessionStorage.get(pdfSessionId);
       context = `PDF: ${pdfData.fileName}\n${pdfData.text || ""}`;
     }
     // Otherwise get relevant context for the manual if manualId is provided
@@ -120,8 +120,8 @@ export async function POST(request) {
     // Prepare system message with context and vehicle info
     let systemPrompt;
     
-    if (pdfSessionId && pdfSessions.has(pdfSessionId)) {
-      const pdfData = pdfSessions.get(pdfSessionId);
+    if (pdfSessionId && sessionStorage.has(pdfSessionId)) {
+      const pdfData = sessionStorage.get(pdfSessionId);
       const promptTemplate = systemPrompts[validLang].pdf.replace('{fileName}', pdfData.fileName);
       systemPrompt = `${promptTemplate}
 ${context ? `\n${validLang === 'de' ? 'Hier sind einige Informationen aus dem PDF:' : validLang === 'fr' ? 'Voici quelques informations du PDF:' : 'Here is some information from the PDF:'}\n${context}` : ""}`;
