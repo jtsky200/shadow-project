@@ -2,6 +2,9 @@
   "name": "shadow-ai",
   "version": "0.1.0",
   "private": true,
+  "engines": {
+    "node": ">=18.0.0"
+  },
   "scripts": {
     "dev": "next dev",
     "build": "NODE_ENV=production next build --no-lint",
@@ -76,7 +79,8 @@
     "react-hook-form": "^7.55.0",
     "react-pdf": "^9.2.1",
     "react-resizable-panels": "^2.1.7",
-    "react-router-dom": "^7.5.1",
+    "react-router": "^6.22.3",
+    "react-router-dom": "^6.22.3",
     "recharts": "^2.15.2",
     "sonner": "^2.0.3",
     "tailwind-merge": "^3.2.0",
@@ -95,7 +99,7 @@
     "@types/react-dom": "^19",
     "@types/uuid": "^10.0.0",
     "concurrently": "^9.1.2",
-    "critters": "^0.0.21",
+    "critters": "^0.0.23",
     "eslint": "^9",
     "eslint-config-next": "15.3.0",
     "fs-extra": "^11.3.0",

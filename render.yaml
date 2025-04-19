@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: shadow-project
+    env: node
+    buildCommand: bash ./render-build.sh
+    startCommand: npm start
+    envVars:
+      - key: NODE_VERSION
+        value: 18.x
+      - key: NODE_ENV
+        value: production 
