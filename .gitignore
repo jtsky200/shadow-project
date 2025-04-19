@@ -57,3 +57,6 @@ bfg.jar
 
 # Firebase cache
 .firebase/
+
+# functions directory
+/functions/

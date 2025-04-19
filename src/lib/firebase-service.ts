@@ -156,7 +156,7 @@ export const manualsService = {
 };
 
 // ===== Troubleshooting Service =====
-export const troubleshootingService = {
+const troubleshootingService = {
   // Get all categories
   async getAllCategories(): Promise<TroubleshootingCategory[]> {
     try {
@@ -192,6 +192,8 @@ export const troubleshootingService = {
     }
   }
 };
+
+export { troubleshootingService };
 
 // ===== User Settings Service =====
 export const userSettingsService = {
@@ -485,7 +487,7 @@ export const chatService = {
 };
 
 // Export a default service object that combines all services
-export default {
+const services = {
   manuals: manualsService,
   troubleshooting: troubleshootingService,
   userSettings: userSettingsService,
@@ -493,4 +495,6 @@ export default {
   library: libraryService,
   files: fileService,
   chat: chatService
-}; 
+};
+
+export { services }; 

@@ -66,11 +66,14 @@ export function clearAllPdfSessions() {
   pdfSessions.clear();
 }
 
-export default {
+const pdfSessionService = {
   store: storePdfSession,
   get: getPdfSession,
   has: hasPdfSession,
   getAll: getAllPdfSessions,
   delete: deletePdfSession,
   clear: clearAllPdfSessions
-}; 
+};
+
+export { pdfSessionService };
+export default pdfSessionService; 
