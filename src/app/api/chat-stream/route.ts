@@ -1,12 +1,19 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { Readable } from 'stream';
-import { exec } from 'child_process';
-import sessionStorage from '../../lib/sessionStorage.js';
+import { exec, ChildProcess } from 'child_process';
+import sessionStorage, { PdfSession } from '../../lib/sessionStorage';
 
 export const dynamic = 'force-dynamic';
 
+interface ChatStreamRequest {
+  message: string;
+  manualId?: string;
+  pdfSessionId?: string;
+  lang?: 'en' | 'de' | 'fr';
+}
+
 // This function turns a regular stream into a ReadableStream for Web API
-function nodeStreamToWeb(nodeStream) {
+function nodeStreamToWeb(nodeStream: Readable): ReadableStream<Uint8Array> {
   return new ReadableStream({
     start(controller) {
       nodeStream.on('data', (chunk) => {
@@ -25,11 +32,11 @@ function nodeStreamToWeb(nodeStream) {
   });
 }
 
-export async function POST(request) {
-  const { message, manualId, pdfSessionId, lang = 'en' } = await request.json();
+export async function POST(request: NextRequest) {
+  const { message, manualId, pdfSessionId, lang = 'en' } = await request.json() as ChatStreamRequest;
 
   // Validate language parameter
-  const validLang = ['en', 'de', 'fr'].includes(lang) ? lang : 'en';
+  const validLang = ['en', 'de', 'fr'].includes(lang || 'en') ? lang : 'en';
 
   if (!message) {
     return NextResponse.json(
@@ -48,7 +55,7 @@ export async function POST(request) {
     let pdfContext = '';
     let pdfFileName = '';
     if (pdfSessionId && sessionStorage.has(pdfSessionId)) {
-      const pdfData = sessionStorage.get(pdfSessionId);
+      const pdfData = sessionStorage.get(pdfSessionId) as PdfSession;
       pdfContext = pdfData.text || '';
       pdfFileName = pdfData.fileName || 'document.pdf';
       console.log(`Using PDF session for ${pdfFileName}`);
@@ -79,16 +86,20 @@ export async function POST(request) {
         }
         
         // Use our local DeepSeek stream script with language parameter
-        const pythonProcess = exec(pythonCommand);
+        const pythonProcess: ChildProcess = exec(pythonCommand);
         
         // Pipe the output directly to our stream
-        pythonProcess.stdout.on('data', (data) => {
-          stream.push(data);
-        });
+        if (pythonProcess.stdout) {
+          pythonProcess.stdout.on('data', (data) => {
+            stream.push(data);
+          });
+        }
         
-        pythonProcess.stderr.on('data', (data) => {
-          console.error(`Python Error: ${data}`);
-        });
+        if (pythonProcess.stderr) {
+          pythonProcess.stderr.on('data', (data) => {
+            console.error(`Python Error: ${data}`);
+          });
+        }
         
         pythonProcess.on('close', (code) => {
           console.log(`Python process exited with code ${code}`);

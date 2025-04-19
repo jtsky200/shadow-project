@@ -1,15 +1,39 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import axios from "axios";
 import { exec } from "child_process";
 import { promisify } from "util";
 import path from "path";
 import fs from "fs/promises";
-import sessionStorage from '../../lib/sessionStorage.js';
+import sessionStorage, { PdfSession } from '../../lib/sessionStorage';
 
 const execPromise = promisify(exec);
 
+// Define types
+interface ChatRequest {
+  question: string;
+  manualId?: string;
+  model?: string;
+  year?: string;
+  pdfSessionId?: string;
+  lang?: 'en' | 'de' | 'fr';
+}
+
+interface SystemPrompts {
+  [lang: string]: {
+    pdf: string;
+    vehicle: string;
+  };
+}
+
+interface ChatResponse {
+  response: string;
+  source: "local-script" | "deepseek-api";
+  lang: string;
+  error?: string;
+}
+
 // Language-specific system prompts
-const systemPrompts = {
+const systemPrompts: SystemPrompts = {
   en: {
     pdf: 'You are a helpful PDF assistant analyzing "{fileName}". Answer the user\'s question based on the PDF content.',
     vehicle: 'You are a helpful automotive assistant for {year} {model}. Answer the user\'s question based on your knowledge of the vehicle.'
@@ -24,16 +48,16 @@ const systemPrompts = {
   }
 };
 
-export async function POST(request) {
+export async function POST(request: NextRequest): Promise<NextResponse<ChatResponse>> {
   try {
-    const { question, manualId, model, year, pdfSessionId, lang = 'en' } = await request.json();
+    const { question, manualId, model, year, pdfSessionId, lang = 'en' } = await request.json() as ChatRequest;
 
     // Validate language parameter (fallback to English if invalid)
     const validLang = ['en', 'de', 'fr'].includes(lang) ? lang : 'en';
 
     if (!question) {
       return NextResponse.json(
-        { error: "Question is required" },
+        { error: "Question is required", response: "", source: "local-script", lang: validLang },
         { status: 400 }
       );
     }
@@ -45,7 +69,7 @@ export async function POST(request) {
       try {
         // Check if we're in a PDF chat session
         if (pdfSessionId && sessionStorage.has(pdfSessionId)) {
-          const pdfData = sessionStorage.get(pdfSessionId);
+          const pdfData = sessionStorage.get(pdfSessionId) as PdfSession;
           console.log(`Using PDF session for ${pdfData.fileName}`);
         }
         
@@ -59,7 +83,7 @@ export async function POST(request) {
         
         // If PDF session exists, prepend context info
         if (pdfSessionId && sessionStorage.has(pdfSessionId)) {
-          const pdfData = sessionStorage.get(pdfSessionId);
+          const pdfData = sessionStorage.get(pdfSessionId) as PdfSession;
           
           // Use language-specific message
           if (validLang === 'de') {
@@ -80,7 +104,9 @@ export async function POST(request) {
         console.error("Error executing local script:", error);
         return NextResponse.json({
           response: "I'm having trouble accessing the information right now. Please try again.",
-          error: error.message
+          source: "local-script",
+          lang: validLang,
+          error: error instanceof Error ? error.message : String(error)
         });
       }
     }
@@ -90,7 +116,7 @@ export async function POST(request) {
 
     // Check for PDF session first
     if (pdfSessionId && sessionStorage.has(pdfSessionId)) {
-      const pdfData = sessionStorage.get(pdfSessionId);
+      const pdfData = sessionStorage.get(pdfSessionId) as PdfSession;
       context = `PDF: ${pdfData.fileName}\n${pdfData.text || ""}`;
     }
     // Otherwise get relevant context for the manual if manualId is provided
@@ -101,13 +127,17 @@ export async function POST(request) {
         const contentPath = path.join(publicDir, 'assets', 'manuals', manualId, 'content.json');
         
         try {
+          interface ManualContent {
+            rawText?: string;
+          }
+          
           // Read the file synchronously
           const fileContent = await fs.readFile(contentPath, 'utf8');
-          const manualData = JSON.parse(fileContent);
+          const manualData = JSON.parse(fileContent) as ManualContent[];
           
           // Extract text from the first 5 pages as context
           if (Array.isArray(manualData)) {
-            context = manualData.slice(0, 5).map(page => page.rawText).join("\n\n");
+            context = manualData.slice(0, 5).map(page => page.rawText || "").join("\n\n");
           }
         } catch (fileError) {
           console.error("Error reading manual file:", fileError);
@@ -118,10 +148,10 @@ export async function POST(request) {
     }
 
     // Prepare system message with context and vehicle info
-    let systemPrompt;
+    let systemPrompt: string;
     
     if (pdfSessionId && sessionStorage.has(pdfSessionId)) {
-      const pdfData = sessionStorage.get(pdfSessionId);
+      const pdfData = sessionStorage.get(pdfSessionId) as PdfSession;
       const promptTemplate = systemPrompts[validLang].pdf.replace('{fileName}', pdfData.fileName);
       systemPrompt = `${promptTemplate}
 ${context ? `\n${validLang === 'de' ? 'Hier sind einige Informationen aus dem PDF:' : validLang === 'fr' ? 'Voici quelques informations du PDF:' : 'Here is some information from the PDF:'}\n${context}` : ""}`;
@@ -170,7 +200,9 @@ ${context ? `\n${validLang === 'de' ? 'Hier sind einige Informationen aus dem Fa
     return NextResponse.json(
       { 
         response: "I apologize, but I'm having trouble accessing the information right now. Please try again later.",
-        error: error.message 
+        source: "local-script",
+        lang: "en",
+        error: error instanceof Error ? error.message : String(error)
       },
       { status: 500 }
     );
