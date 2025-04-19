@@ -1,0 +1,37 @@
+[
+  {
+    "pageNumber": 1,
+    "title": "Introduction",
+    "ocrText": "Welcome to your Cadillac LYRIQ Owner's Manual. This comprehensive guide will help you understand the features, functions, and maintenance requirements of your all-electric luxury SUV. Please take the time to familiarize yourself with your vehicle to ensure an optimal driving experience."
+  },
+  {
+    "pageNumber": 2,
+    "title": "Vehicle Overview",
+    "ocrText": "The Cadillac LYRIQ is built on GM's Ultium platform, featuring a 102 kWh battery pack that delivers up to 530 km of range (WLTP). With 388 kW of power and 610 Nm of torque, the LYRIQ offers responsive acceleration and confident handling in all driving conditions."
+  },
+  {
+    "pageNumber": 3,
+    "title": "Charging Information",
+    "ocrText": "Your LYRIQ supports DC fast charging at up to 190 kW, allowing you to add approximately 120 km of range in just 10 minutes when connected to a compatible high-power charging station. At home, the 11 kW onboard charger enables convenient overnight charging with a Level 2 charging installation."
+  },
+  {
+    "pageNumber": 4,
+    "title": "Display and Controls",
+    "ocrText": "The centerpiece of the LYRIQ's cabin is the 33-inch curved LED display that spans the dashboard. This unified screen integrates instrument cluster information, infotainment, and climate controls. The intuitive interface can be controlled via touch, voice commands, or the rotary controller on the center console."
+  },
+  {
+    "pageNumber": 5,
+    "title": "Safety Features",
+    "ocrText": "Your LYRIQ is equipped with comprehensive safety features including Forward Collision Alert, Automatic Emergency Braking, Lane Keep Assist with Lane Departure Warning, Side Blind Zone Alert, Rear Cross Traffic Alert, and HD Surround Vision. Super Cruise hands-free driver assistance technology is available on compatible highways."
+  },
+  {
+    "pageNumber": 6,
+    "title": "Battery Care",
+    "ocrText": "To maximize battery life and performance, avoid regularly charging to 100% unless needed for long trips. The LYRIQ's battery management system includes active thermal management to maintain optimal battery temperature in all weather conditions, helping to preserve battery health and range."
+  },
+  {
+    "pageNumber": 7,
+    "title": "Maintenance Schedule",
+    "ocrText": "While electric vehicles require less maintenance than traditional combustion engine vehicles, regular service is still important. Your LYRIQ should have its brake fluid changed every 2 years, cabin air filter replaced annually, and a comprehensive vehicle inspection performed every 12 months or 20,000 km."
+  }
+] 

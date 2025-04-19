@@ -1,0 +1,18 @@
+{
+  "version": "0.2",
+  "language": "en",
+  "words": [
+    "LYRIQ", 
+    "lyriq",
+    "OPTIQ",
+    "optiq",
+    "Ultium",
+    "myCadillac"
+  ],
+  "ignorePaths": [
+    "node_modules/**",
+    ".next/**",
+    "*.min.js",
+    "package-lock.json"
+  ]
+} 

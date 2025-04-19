@@ -1,0 +1,50 @@
+[
+  {
+    "id": "lyriq-manual",
+    "title": "LYRIQ Owner's Manual",
+    "filename": "LYRIQ-24-Owner-Manual-EU-EN.pdf",
+    "year": "2024",
+    "model": "LYRIQ",
+    "totalPages": 350,
+    "processedPages": 10,
+    "success": true,
+    "path": "lyriq-manual",
+    "lastProcessed": "2025-04-17T22:45:09.977Z"
+  },
+  {
+    "id": "lyriq-specifications",
+    "title": "LYRIQ Specifications",
+    "filename": "2024-CADILLAC-LYRIQ-SPECIFICATIONS-ENGLISH.pdf",
+    "year": "2024",
+    "model": "LYRIQ",
+    "totalPages": 15,
+    "processedPages": 10,
+    "success": true,
+    "path": "lyriq-specifications",
+    "lastProcessed": "2025-04-17T22:45:09.977Z"
+  },
+  {
+    "id": "lyriq-quickstart",
+    "title": "LYRIQ Quick Start Guide",
+    "filename": "GME_Cadillac_LYRIQ_QUICKSTART_GUIDE_EN.pdf",
+    "year": "2024",
+    "model": "LYRIQ",
+    "totalPages": 40,
+    "processedPages": 10,
+    "success": true,
+    "path": "lyriq-quickstart",
+    "lastProcessed": "2025-04-17T22:45:09.977Z"
+  },
+  {
+    "id": "optiq-manual",
+    "title": "OPTIQ Owner's Manual",
+    "filename": "2025-optiq-owners-manual.pdf",
+    "year": "2025",
+    "model": "OPTIQ",
+    "totalPages": 300,
+    "processedPages": 10,
+    "success": true,
+    "path": "optiq-manual",
+    "lastProcessed": "2025-04-17T22:45:09.977Z"
+  }
+]

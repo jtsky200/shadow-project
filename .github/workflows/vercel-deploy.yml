@@ -1,0 +1,78 @@
+name: Deploy to Vercel
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+          
+      - name: Install dependencies
+        run: npm ci
+        
+      - name: Fix problematic files
+        run: |
+          if [ -d "src/app/api/ask-memory" ]; then
+            rm -rf src/app/api/ask-memory
+            mkdir -p src/app/api/ask-memory
+            cat > src/app/api/ask-memory/route.js << 'EOL'
+          import { NextResponse } from 'next/server';
+
+          export async function POST(request) {
+            try {
+              const body = await request.json();
+              const { question, sessionId } = body;
+              
+              if (!question) {
+                return NextResponse.json({ error: 'Question is required' }, { status: 400 });
+              }
+              
+              // In development, proxy to the local server
+              // In production, connect to the production API
+              const serverUrl = process.env.NODE_ENV === 'production' 
+                ? process.env.DEEPSEEK_API_URL || 'http://localhost:3001/ask-memory'
+                : 'http://localhost:3001/ask-memory';
+                
+              const response = await fetch(serverUrl, {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ 
+                  question,
+                  sessionId
+                }),
+              });
+              
+              if (!response.ok) {
+                throw new Error(`Memory API error: ${response.status}`);
+              }
+              
+              const data = await response.json();
+              return NextResponse.json(data);
+            } catch (error) {
+              console.error('API error:', error);
+              return NextResponse.json({ error: 'Failed to process request' }, { status: 500 });
+            }
+          }
+          EOL
+          fi
+      
+      - name: Deploy to Vercel
+        uses: amondnet/vercel-action@v20
+        with:
+          vercel-token: ${{ secrets.VERCEL_TOKEN }}
+          vercel-org-id: ${{ secrets.ORG_ID }}
+          vercel-project-id: ${{ secrets.PROJECT_ID }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          vercel-args: --prod 
