@@ -1,31 +1,70 @@
 import * as admin from 'firebase-admin';
 import { getApps } from 'firebase-admin/app';
+import { Firestore } from 'firebase-admin/firestore';
+
+// Type definitions for mock implementations
+interface MockFirestore {
+  collection: (name: string) => {
+    doc: (id: string) => {
+      get: () => Promise<{ exists: boolean; data: () => Record<string, unknown> }>;
+      set: (data: Record<string, unknown>, options?: Record<string, unknown>) => Promise<void>;
+      update: (data: Record<string, unknown>) => Promise<void>;
+    };
+    add: (data: Record<string, unknown>) => Promise<{ id: string }>;
+    where: (field: string, operator: string, value: unknown) => {
+      get: () => Promise<{ docs: unknown[] }>;
+    };
+  };
+}
+
+interface MockBucket {
+  file: (path: string) => {
+    save: (data: Buffer, options?: Record<string, unknown>) => Promise<void>;
+    getSignedUrl: (options: Record<string, unknown>) => Promise<string[]>;
+    delete: () => Promise<void>;
+  };
+  upload: (path: string, options?: Record<string, unknown>) => Promise<void>;
+}
+
+// Storage bucket type that works with our use cases
+interface StorageBucket {
+  file: (path: string) => {
+    save: (data: Buffer, options?: Record<string, unknown>) => Promise<void>;
+    getSignedUrl: (options: Record<string, unknown>) => Promise<string[]>;
+    delete: () => Promise<void>;
+  };
+  upload: (path: string, options?: Record<string, unknown>) => Promise<void>;
+}
+
+// Create type for our exports
+export type AdminFirestore = Firestore | MockFirestore;
+export type AdminStorage = StorageBucket | MockBucket;
 
 // Create mock implementations for Firebase services
-const mockAdminDb = {
+const mockAdminDb: MockFirestore = {
   collection: () => ({
     doc: () => ({
       get: async () => ({ exists: false, data: () => ({}) }),
-      set: async () => ({}),
-      update: async () => ({}),
+      set: async () => {},
+      update: async () => {},
     }),
     add: async () => ({ id: 'mock-id' }),
     where: () => ({ get: async () => ({ docs: [] }) }),
   }),
 };
 
-const mockAdminStorage = {
+const mockAdminStorage: MockBucket = {
   file: () => ({
-    save: async () => ({}),
+    save: async () => {},
     getSignedUrl: async () => ['https://example.com/mock-url'],
-    delete: async () => ({}),
+    delete: async () => {},
   }),
-  upload: async () => ({}),
+  upload: async () => {},
 };
 
 // Initialize variables for Firebase services
-let adminDb;
-let adminStorage;
+let adminDb: AdminFirestore;
+let adminStorage: AdminStorage;
 let isInitialized = false;
 
 // Initialize Firebase Admin SDK only if it hasn't been initialized
@@ -65,7 +104,7 @@ if (!getApps().length) {
     
     // Get Firestore and Storage instances
     adminDb = admin.firestore();
-    adminStorage = admin.storage().bucket();
+    adminStorage = admin.storage().bucket() as unknown as StorageBucket;
     isInitialized = true;
     
     console.log('Firebase Admin SDK initialized successfully');
@@ -79,13 +118,16 @@ if (!getApps().length) {
       // Use mock implementations
       adminDb = mockAdminDb;
       adminStorage = mockAdminStorage;
+    } else {
+      // For development, throw the error
+      throw error;
     }
   }
 } else {
   // If already initialized, get the instances
   try {
     adminDb = admin.firestore();
-    adminStorage = admin.storage().bucket();
+    adminStorage = admin.storage().bucket() as unknown as StorageBucket;
     isInitialized = true;
   } catch (error) {
     console.error('Error getting Firebase services:', error);

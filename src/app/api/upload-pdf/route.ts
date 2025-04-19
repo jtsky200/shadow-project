@@ -1,21 +1,33 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { writeFile } from 'fs/promises';
 import { join } from 'path';
 import { tmpdir } from 'os';
 import pdfParse from 'pdf-parse';
 import { v4 as uuidv4 } from 'uuid';
 import { OpenAI } from 'openai';
-import sessionStorage from '../../lib/sessionStorage.js';
+import sessionStorage from '../../lib/sessionStorage';
+
+// Define response types
+interface PdfResponse {
+  success: boolean;
+  sessionId: string;
+  fileName: string;
+  contentPreview: string;
+}
+
+interface ErrorResponse {
+  error: string;
+}
 
 // Create OpenAI client with fallback handling
 const openai = process.env.OPENAI_API_KEY 
   ? new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
   : null;
 
-export async function POST(req) {
+export async function POST(req: NextRequest): Promise<NextResponse<PdfResponse | ErrorResponse>> {
   try {
     const formData = await req.formData();
-    const file = formData.get('pdf');
+    const file = formData.get('pdf') as File | null;
     
     if (!file) {
       return NextResponse.json({ error: 'No PDF uploaded' }, { status: 400 });
@@ -36,7 +48,7 @@ export async function POST(req) {
     const text = pdfData.text.slice(0, 8000); // Limit text size
 
     // Generate embedding if OpenAI API key is available
-    let embedding = [];
+    let embedding: number[] = [];
     if (openai) {
       try {
         const embeddingRes = await openai.embeddings.create({
@@ -69,6 +81,8 @@ export async function POST(req) {
     });
   } catch (error) {
     console.error('PDF processing error:', error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ 
+      error: error instanceof Error ? error.message : 'Unknown error' 
+    }, { status: 500 });
   }
 } 

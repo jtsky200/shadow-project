@@ -5,7 +5,15 @@
  * that can be accessed across different API routes.
  */
 
+// Define the PDF session data interface
+export interface PdfSession {
+  text: string;
+  embedding: number[];
+  fileName: string;
+  uploadDate: string;
+}
+
 // Create a Map to store PDF session data
-const sessionStorage = new Map();
+const sessionStorage = new Map<string, PdfSession>();
 
 export default sessionStorage; 
