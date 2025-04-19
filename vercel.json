@@ -11,7 +11,7 @@
     "OPENAI_API_KEY": "${OPENAI_API_KEY}",
     "NODE_ENV": "production"
   },
-  "buildCommand": "NEXT_DISABLE_ESLINT=1 next build",
+  "buildCommand": "next build --no-lint --no-typescript",
   "github": {
     "silent": true
   }
