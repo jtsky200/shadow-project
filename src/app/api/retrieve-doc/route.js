@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { promises as fs } from 'fs';
 import path from 'path';
 import { OpenAI } from 'openai';
-import { sessionStorage } from '../upload-pdf/route';
+import sessionStorage from '../../lib/sessionStorage.js';
 
 // Configure OpenAI
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });

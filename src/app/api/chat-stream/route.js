@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { Readable } from 'stream';
 import { exec } from 'child_process';
-import { sessionStorage } from '../upload-pdf/route';
+import sessionStorage from '../../lib/sessionStorage.js';
 
 export const dynamic = 'force-dynamic';
 

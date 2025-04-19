@@ -5,14 +5,12 @@ import { tmpdir } from 'os';
 import pdfParse from 'pdf-parse';
 import { v4 as uuidv4 } from 'uuid';
 import { OpenAI } from 'openai';
+import sessionStorage from '../../lib/sessionStorage.js';
 
 // Create OpenAI client
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
-
-// In-memory storage for PDF sessions
-export const sessionStorage = new Map();
 
 export async function POST(req) {
   try {

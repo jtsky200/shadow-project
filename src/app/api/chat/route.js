@@ -4,7 +4,7 @@ import { exec } from "child_process";
 import { promisify } from "util";
 import path from "path";
 import fs from "fs/promises";
-import { sessionStorage } from '../upload-pdf/route';
+import sessionStorage from '../../lib/sessionStorage.js';
 
 const execPromise = promisify(exec);
 
