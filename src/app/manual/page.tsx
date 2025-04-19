@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState, useEffect } from "react"
+import React, { useState, useEffect, Suspense } from "react"
 import { useSearchParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card"
@@ -486,10 +486,16 @@ interface ManualPage {
   tags: string[]
 }
 
-export default function ManualPage() {
+// Search params component to be wrapped in Suspense
+function ManualPageWithParams() {
   const searchParams = useSearchParams()
   const manualId = searchParams.get("id")
   
+  return <ManualPageContent initialManualId={manualId} />
+}
+
+// Main content component
+function ManualPageContent({ initialManualId }: { initialManualId: string | null }) {
   const [activeTab, setActiveTab] = useState("getting-started")
   const [selectedModel, setSelectedModel] = useState("lyriq")
   
@@ -550,8 +556,8 @@ export default function ManualPage() {
   ]
   
   useEffect(() => {
-    if (manualId) {
-      const manual = externalManuals.find(m => m.id === manualId)
+    if (initialManualId) {
+      const manual = externalManuals.find(m => m.id === initialManualId)
       if (manual) {
         setExternalManual(manual)
         loadManualContent(manual.id)
@@ -562,7 +568,7 @@ export default function ManualPage() {
     } else {
       setShowExternal(false)
     }
-  }, [manualId])
+  }, [initialManualId])
   
   const loadManualContent = async (id: string) => {
     setLoading(true)
@@ -829,5 +835,14 @@ export default function ManualPage() {
         </div>
       </div>
     </div>
+  )
+}
+
+// Main export with Suspense boundary
+export default function ManualPage() {
+  return (
+    <Suspense fallback={<div className="flex items-center justify-center h-screen">Loading...</div>}>
+      <ManualPageWithParams />
+    </Suspense>
   )
 } 
