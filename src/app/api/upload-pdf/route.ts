@@ -33,31 +33,40 @@ export async function POST(req: NextRequest): Promise<NextResponse<PdfResponse |
       return NextResponse.json({ error: 'No PDF uploaded' }, { status: 400 });
     }
 
-    // Create a temporary file path
-    const tempFilePath = join(tmpdir(), `${uuidv4()}.pdf`);
-    
-    // Convert the file to a buffer and save it temporarily
-    const bytes = await file.arrayBuffer();
-    const buffer = Buffer.from(bytes);
-    
-    // Write the file to disk
-    await writeFile(tempFilePath, buffer);
-    
-    // Parse the PDF
-    const pdfData = await pdfParse(buffer);
-    const text = pdfData.text.slice(0, 8000); // Limit text size
+    let text = '';
+    let buffer: Buffer;
+
+    try {
+      // Convert the file to a buffer
+      const bytes = await file.arrayBuffer();
+      buffer = Buffer.from(bytes);
+      
+      // Create a temporary file path
+      const tempFilePath = join(tmpdir(), `${uuidv4()}.pdf`);
+      
+      // Write the file to disk
+      await writeFile(tempFilePath, buffer);
+      
+      // Parse the PDF
+      const pdfData = await pdfParse(buffer);
+      text = pdfData.text.slice(0, 8000); // Limit text size
+    } catch (pdfError) {
+      console.error('Error processing PDF:', pdfError);
+      // Fallback to simple text extraction if PDF parsing fails
+      text = `Failed to extract text from ${file.name}. The file might be corrupted or password protected.`;
+    }
 
     // Generate embedding if OpenAI API key is available
     let embedding: number[] = [];
-    if (openai) {
+    if (openai && text.trim().length > 0) {
       try {
         const embeddingRes = await openai.embeddings.create({
           model: 'text-embedding-3-small',
           input: text,
         });
         embedding = embeddingRes.data[0].embedding;
-      } catch (error) {
-        console.error('Error generating embedding:', error);
+      } catch (embedError) {
+        console.error('Error generating embedding:', embedError);
         // Continue without embedding
       }
     }

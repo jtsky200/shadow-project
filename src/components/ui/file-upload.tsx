@@ -4,7 +4,7 @@ import React, { useState, useRef } from 'react'
 import { Button } from '@/components/ui/button'
 import { Progress } from '@/components/ui/progress'
 import { Upload, X, Check, File } from 'lucide-react'
-import { uploadFile, generateFilePath } from '@/lib/fileUpload'
+import { uploadFileWithProgress, generateFilePath } from '@/lib/fileUpload'
 
 interface FileUploadProps {
   onUploadComplete?: (url: string, file: File) => void
@@ -70,9 +70,13 @@ export function FileUpload({
       // Try to use our utility function, but catch any errors
       try {
         // Upload the file to Firebase Storage
-        const downloadURL = await uploadFile(file, path, (progress) => {
-          setProgress(progress)
-        })
+        const downloadURL = await uploadFileWithProgress(
+          file, 
+          path,
+          (progress: number) => {
+            setProgress(progress)
+          }
+        )
 
         // Set upload as complete
         setUploadComplete(true)

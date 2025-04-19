@@ -1,6 +1,7 @@
 // This is a mock implementation of Firebase services
 // It provides the same interface but doesn't actually connect to Firebase
 
+/* eslint-disable @typescript-eslint/no-unused-vars */
 // Type definitions
 export interface Manual {
   id: string;
@@ -270,6 +271,7 @@ export const documentsService = {
     return [];
   }
 };
+/* eslint-enable @typescript-eslint/no-unused-vars */
 
 // Export a default service object that combines all services
 const services = {

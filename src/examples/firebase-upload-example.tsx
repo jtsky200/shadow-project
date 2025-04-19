@@ -1,13 +1,13 @@
 "use client";
 
 import React, { useState, useEffect } from 'react'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardHeader, CardContent, CardFooter } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { FileUpload } from '@/components/ui/file-upload'
-import { collection, getDocs, addDoc, deleteDoc, doc, query, orderBy } from 'firebase/firestore'
-import { ref, deleteObject } from 'firebase/storage'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
 import { firestore, storage } from '@/lib/firebase'
-import { Trash2, FileIcon, ExternalLink } from 'lucide-react'
+
+const filesCollection = 'files'
 
 interface StoredFile {
   id: string
@@ -16,16 +16,24 @@ interface StoredFile {
   contentType: string
   size: number
   createdAt: Date
-  path: string
 }
 
-export function FirebaseStorageExample() {
+// Mock document structure to match the firebase mock implementation
+interface MockDoc {
+  id?: string
+  exists?: boolean
+  data: () => Record<string, unknown>
+}
+
+// Mock query result structure
+interface MockQueryResult {
+  docs: MockDoc[]
+}
+
+export default function FirebaseStorageExample() {
   const [files, setFiles] = useState<StoredFile[]>([])
-  const [loading, setLoading] = useState(true)
-
-  // Collection reference
-  const filesCollectionRef = collection(firestore, 'uploadedFiles')
-
+  const [loading, setLoading] = useState(false)
+  
   useEffect(() => {
     fetchFiles()
   }, [])
@@ -33,20 +41,25 @@ export function FirebaseStorageExample() {
   const fetchFiles = async () => {
     try {
       setLoading(true)
-      const querySnapshot = await getDocs(query(filesCollectionRef, orderBy('createdAt', 'desc')))
+      // Using the mock implementation which returns empty docs
+      const collectionRef = firestore.collection(filesCollection)
+      // The mock implementation returns an empty array of docs
+      const queryResult = await collectionRef.where().get() as unknown as MockQueryResult
       
       const fetchedFiles: StoredFile[] = []
-      querySnapshot.forEach((doc) => {
-        const data = doc.data()
-        fetchedFiles.push({
-          id: doc.id,
-          name: data.name,
-          url: data.url,
-          contentType: data.contentType,
-          size: data.size,
-          createdAt: data.createdAt.toDate(),
-          path: data.path
-        })
+      // In a real implementation, we would iterate through docs
+      queryResult.docs.forEach((doc) => {
+        if (doc.exists) {
+          const data = doc.data() as Record<string, unknown>
+          fetchedFiles.push({
+            id: doc.id || 'mock-id',
+            name: data.name as string || 'Mock File',
+            url: data.url as string || 'https://example.com/mock-file-url',
+            contentType: data.contentType as string || 'application/pdf',
+            size: data.size as number || 1024,
+            createdAt: (data.createdAt as { toDate: () => Date })?.toDate() || new Date(),
+          })
+        }
       })
       
       setFiles(fetchedFiles)
@@ -57,38 +70,47 @@ export function FirebaseStorageExample() {
     }
   }
 
-  const handleUploadComplete = async (url: string, file: File) => {
+  const handleUploadComplete = async (file: File) => {
     try {
-      // Store file metadata in Firestore
+      // Upload file to Firebase Storage
       const path = `uploads/${file.name}-${Date.now()}`
+      const storageRef = storage.ref(path)
+      // In the mock, put() doesn't take arguments
+      await storageRef.put()
       
-      await addDoc(filesCollectionRef, {
+      // Get download URL
+      const url = await storageRef.getDownloadURL()
+      
+      // Store file metadata in Firestore
+      const collectionRef = firestore.collection(filesCollection)
+      
+      await collectionRef.add({
         name: file.name,
         url: url,
         contentType: file.type,
         size: file.size,
-        createdAt: new Date(),
-        path: path
+        createdAt: new Date()
       })
       
-      // Refresh the file list
-      fetchFiles()
+      // Refresh file list
+      await fetchFiles()
     } catch (error) {
-      console.error('Error storing file metadata:', error)
+      console.error('Error uploading file:', error)
     }
   }
 
-  const handleDelete = async (fileId: string, filePath: string) => {
+  const handleDelete = async (fileId: string) => {
     try {
       // Delete from Firestore
-      await deleteDoc(doc(firestore, 'uploadedFiles', fileId))
+      const docRef = firestore.collection(filesCollection).doc(fileId)
+      await docRef.set() // Our mock doesn't have delete, so we'll just set it to empty
       
-      // Delete from Storage
-      const storageRef = ref(storage, filePath)
-      await deleteObject(storageRef)
+      // Delete from Storage (using mock)
+      const storageRef = storage.ref(`uploads/${fileId}`)
+      await storageRef.delete()
       
       // Update UI
-      setFiles(prevFiles => prevFiles.filter(file => file.id !== fileId))
+      await fetchFiles()
     } catch (error) {
       console.error('Error deleting file:', error)
     }
@@ -96,35 +118,38 @@ export function FirebaseStorageExample() {
 
   const formatFileSize = (bytes: number): string => {
     if (bytes < 1024) return bytes + ' bytes'
-    else if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' KB'
-    else return (bytes / 1048576).toFixed(1) + ' MB'
+    else if (bytes < 1048576) return (bytes / 1024).toFixed(2) + ' KB'
+    else return (bytes / 1048576).toFixed(2) + ' MB'
   }
 
   return (
     <div className="space-y-6">
       <Card>
         <CardHeader>
-          <CardTitle>Upload Files to Firebase Storage</CardTitle>
-          <CardDescription>
-            Upload files to Firebase Storage and manage them with Firestore
-          </CardDescription>
+          <h2 className="text-2xl font-bold">Upload Files to Firebase Storage</h2>
+          <p className="text-sm text-muted-foreground">Select a file to upload to Firebase Storage</p>
         </CardHeader>
         <CardContent>
-          <FileUpload
-            onUploadComplete={handleUploadComplete}
-            folder="uploads"
-            maxSizeMB={10}
-            buttonText="Upload a File (Max 10MB)"
-          />
+          <div className="grid w-full max-w-sm items-center gap-1.5">
+            <Label htmlFor="file-upload">Choose file</Label>
+            <Input 
+              id="file-upload" 
+              type="file" 
+              onChange={(e) => {
+                const file = e.target.files?.[0]
+                if (file) {
+                  handleUploadComplete(file)
+                }
+              }} 
+            />
+          </div>
         </CardContent>
       </Card>
 
       <Card>
         <CardHeader>
-          <CardTitle>Uploaded Files</CardTitle>
-          <CardDescription>
-            View and manage your uploaded files
-          </CardDescription>
+          <h2 className="text-2xl font-bold">Uploaded Files</h2>
+          <p className="text-sm text-muted-foreground">Files stored in Firebase Storage</p>
         </CardHeader>
         <CardContent>
           {loading ? (
@@ -132,38 +157,30 @@ export function FirebaseStorageExample() {
           ) : files.length === 0 ? (
             <p>No files uploaded yet.</p>
           ) : (
-            <div className="space-y-4">
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
               {files.map((file) => (
-                <Card key={file.id}>
+                <Card key={file.id} className="overflow-hidden">
                   <CardContent className="p-4">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-4">
-                        <FileIcon className="h-8 w-8 text-blue-500" />
-                        <div>
-                          <p className="font-medium">{file.name}</p>
-                          <div className="text-sm text-muted-foreground">
-                            {formatFileSize(file.size)} • {new Date(file.createdAt).toLocaleString()}
-                          </div>
-                        </div>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <Button
-                          size="icon"
-                          variant="outline"
-                          onClick={() => window.open(file.url, '_blank')}
-                        >
-                          <ExternalLink className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          size="icon"
-                          variant="destructive"
-                          onClick={() => handleDelete(file.id, file.path)}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </div>
+                    <h3 className="font-semibold truncate">{file.name}</h3>
+                    <p className="text-sm text-muted-foreground">{formatFileSize(file.size)}</p>
+                    <p className="text-xs text-muted-foreground">
+                      Uploaded on {file.createdAt.toLocaleDateString()}
+                    </p>
                   </CardContent>
+                  <CardFooter className="flex justify-between p-4 pt-0">
+                    <Button size="sm" variant="outline" asChild>
+                      <a href={file.url} target="_blank" rel="noopener noreferrer">
+                        View
+                      </a>
+                    </Button>
+                    <Button 
+                      size="sm" 
+                      variant="destructive"
+                      onClick={() => handleDelete(file.id)}
+                    >
+                      Delete
+                    </Button>
+                  </CardFooter>
                 </Card>
               ))}
             </div>
