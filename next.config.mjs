@@ -3,6 +3,7 @@ const nextConfig = {
   reactStrictMode: false,
   typescript: {
     ignoreBuildErrors: true,
+    tsconfigPath: false
   },
   eslint: {
     ignoreDuringBuilds: true,
