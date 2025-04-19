@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { promises as fs } from 'fs';
 import path from 'path';
 import { OpenAI } from 'openai';
-import sessionStorage, { PdfSession } from '../../lib/sessionStorage';
+import sessionStorage, { PdfSession } from '@/app/lib/sessionStorage';
 
 // Define types
 interface RetrieveDocRequest {

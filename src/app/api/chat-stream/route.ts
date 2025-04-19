@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { Readable } from 'stream';
 import { exec, ChildProcess } from 'child_process';
-import sessionStorage, { PdfSession } from '../../lib/sessionStorage';
+import sessionStorage, { PdfSession } from '@/app/lib/sessionStorage';
+import process from 'process';
 
 export const dynamic = 'force-dynamic';
 
@@ -66,6 +67,16 @@ export async function POST(request: NextRequest) {
       try {
         // Escape the question to prevent command injection
         const escapedQuestion = message.replace(/["\\]/g, '\\$&');
+        
+        // Check if we're in a production environment like Vercel
+        if (process.env.VERCEL) {
+          console.log('Running in Vercel environment, using fallback response');
+          // Provide a fallback experience for Vercel
+          stream.push('I cannot process this request in streaming mode in this environment. ');
+          stream.push('Please try again using the standard chat interface.');
+          stream.push(null); // End the stream
+          return;
+        }
         
         let pythonCommand = `python scripts/deepseek_stream.py "${escapedQuestion}" "${validLang}" ${manualId || ''}`;
         

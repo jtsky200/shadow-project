@@ -4,7 +4,7 @@ import { exec } from "child_process";
 import { promisify } from "util";
 import path from "path";
 import fs from "fs/promises";
-import sessionStorage, { PdfSession } from '../../lib/sessionStorage';
+import sessionStorage, { PdfSession } from '@/app/lib/sessionStorage';
 
 const execPromise = promisify(exec);
 
@@ -67,6 +67,16 @@ export async function POST(request: NextRequest): Promise<NextResponse<ChatRespo
       console.log("No DeepSeek API key found, using local mock script");
       
       try {
+        // Check if we're in a production environment like Vercel
+        if (process.env.VERCEL) {
+          console.log('Running in Vercel environment, using fallback response');
+          return NextResponse.json({
+            response: "I'm running in a cloud environment where I can't access local scripts. Please configure a DeepSeek API key for full functionality.",
+            source: "local-script",
+            lang: validLang
+          });
+        }
+        
         // Check if we're in a PDF chat session
         if (pdfSessionId && sessionStorage.has(pdfSessionId)) {
           const pdfData = sessionStorage.get(pdfSessionId) as PdfSession;

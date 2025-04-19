@@ -5,7 +5,7 @@ import { tmpdir } from 'os';
 import pdfParse from 'pdf-parse';
 import { v4 as uuidv4 } from 'uuid';
 import { OpenAI } from 'openai';
-import sessionStorage from '../../lib/sessionStorage';
+import sessionStorage from '@/app/lib/sessionStorage';
 
 // Define response types
 interface PdfResponse {
