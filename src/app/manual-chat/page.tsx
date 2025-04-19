@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useRef, useMemo } from "react"
+import { useState, useEffect, useRef, useMemo, Suspense } from "react"
 import { useSearchParams } from "next/navigation"
 import { ChevronLeft, SendIcon, Car, BookOpen, RefreshCw, StopCircle, Paperclip, Search, Image, Clipboard, Download, Globe } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -56,10 +56,16 @@ const CenteredTextarea = React.forwardRef<HTMLTextAreaElement, React.ComponentPr
 );
 CenteredTextarea.displayName = "CenteredTextarea";
 
-export default function ManualChatPage() {
+// Search params component to be wrapped in Suspense
+function ManualChatWithParams() {
   const searchParams = useSearchParams()
   const manualId = searchParams.get("manualId")
   
+  return <ManualChatContent initialManualId={manualId} />
+}
+
+// Main content component
+function ManualChatContent({ initialManualId }: { initialManualId: string | null }) {
   const [uniqueVehicles, setUniqueVehicles] = useState<ManualMetadata[]>([])
   const [selectedManual, setSelectedManual] = useState<ManualMetadata | null>(null)
   const [loading, setLoading] = useState<boolean>(false)
@@ -135,8 +141,8 @@ export default function ManualChatPage() {
           setUniqueVehicles(Array.from(vehicleMap.values()))
           
           // If manual ID is in URL params, select it
-          if (manualId) {
-            const foundManual = data.find(manual => manual.id === manualId)
+          if (initialManualId) {
+            const foundManual = data.find(manual => manual.id === initialManualId)
             if (foundManual) {
               setSelectedManual(foundManual)
               // Add initial system message based on language
@@ -160,7 +166,7 @@ export default function ManualChatPage() {
       .catch(error => {
         console.error('Error fetching manuals:', error)
       })
-  }, [manualId])
+  }, [initialManualId, lang])
 
   // Manual selection handler
   const handleManualSelect = (manual: ManualMetadata) => {
@@ -829,5 +835,14 @@ export default function ManualChatPage() {
         </div>
       </div>
     </div>
+  )
+}
+
+// Main export with Suspense boundary
+export default function ManualChatPage() {
+  return (
+    <Suspense fallback={<div className="flex items-center justify-center h-screen">Loading...</div>}>
+      <ManualChatWithParams />
+    </Suspense>
   )
 } 
