@@ -11,7 +11,7 @@
     "OPENAI_API_KEY": "${OPENAI_API_KEY}",
     "NODE_ENV": "production"
   },
-  "buildCommand": "next build --no-lint",
+  "buildCommand": "NODE_ENV=production next build --no-lint",
   "github": {
     "silent": true
   }

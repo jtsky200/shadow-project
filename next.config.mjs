@@ -20,7 +20,7 @@ const nextConfig = {
   },
   experimental: {
     scrollRestoration: true,
-    optimizeCss: true,
+    optimizeCss: false,
   },
   async rewrites() {
     return [
