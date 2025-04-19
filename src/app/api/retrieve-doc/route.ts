@@ -20,7 +20,7 @@ interface ErrorResponse {
 
 export async function POST(request: NextRequest): Promise<NextResponse<RetrieveDocResponse | ErrorResponse>> {
   try {
-    const { query, sessionId } = await request.json() as RetrieveDocRequest;
+    const { query } = await request.json() as RetrieveDocRequest;
     
     if (!query) {
       return NextResponse.json(

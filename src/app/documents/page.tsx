@@ -20,7 +20,7 @@ export default function DocumentsPage() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <p>The documents feature is temporarily unavailable. We're working on improving this feature and it will be back soon.</p>
+            <p>The documents feature is temporarily unavailable. We&apos;re working on improving this feature and it will be back soon.</p>
           </CardContent>
         </Card>
       </div>
