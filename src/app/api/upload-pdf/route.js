@@ -7,10 +7,10 @@ import { v4 as uuidv4 } from 'uuid';
 import { OpenAI } from 'openai';
 import sessionStorage from '../../lib/sessionStorage.js';
 
-// Create OpenAI client
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+// Create OpenAI client with fallback handling
+const openai = process.env.OPENAI_API_KEY 
+  ? new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
+  : null;
 
 export async function POST(req) {
   try {
@@ -35,11 +35,20 @@ export async function POST(req) {
     const pdfData = await pdfParse(buffer);
     const text = pdfData.text.slice(0, 8000); // Limit text size
 
-    // Generate embedding
-    const embeddingRes = await openai.embeddings.create({
-      model: 'text-embedding-3-small',
-      input: text,
-    });
+    // Generate embedding if OpenAI API key is available
+    let embedding = [];
+    if (openai) {
+      try {
+        const embeddingRes = await openai.embeddings.create({
+          model: 'text-embedding-3-small',
+          input: text,
+        });
+        embedding = embeddingRes.data[0].embedding;
+      } catch (error) {
+        console.error('Error generating embedding:', error);
+        // Continue without embedding
+      }
+    }
 
     // Create a session ID
     const sessionId = Date.now().toString();
@@ -47,7 +56,7 @@ export async function POST(req) {
     // Store PDF data in memory
     sessionStorage.set(sessionId, {
       text,
-      embedding: embeddingRes.data[0].embedding,
+      embedding,
       fileName: file.name,
       uploadDate: new Date().toISOString()
     });
