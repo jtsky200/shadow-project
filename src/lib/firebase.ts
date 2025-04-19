@@ -1,23 +1,41 @@
-import { initializeApp, getApps } from 'firebase/app';
-import { getStorage } from 'firebase/storage';
-import { getFirestore } from 'firebase/firestore';
+// This is a temporary mock implementation of the Firebase client SDK
+// It provides the same interface but doesn't try to connect to Firebase
 
-// Firebase configuration
-const firebaseConfig = {
-  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
-  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
-  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
-  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
-  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
-  measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID,
+// Mock firestore implementation
+const firestore = {
+  collection: (_name: string) => ({
+    doc: (_id: string) => ({
+      get: async () => ({ exists: false, data: () => ({}) }),
+      set: async () => {},
+      update: async () => {},
+    }),
+    add: async (_data: Record<string, unknown>) => ({ id: 'mock-id' }),
+    where: () => ({
+      orderBy: () => ({
+        get: async () => ({ docs: [] }),
+      }),
+      get: async () => ({ docs: [] }),
+    }),
+    orderBy: () => ({
+      get: async () => ({ docs: [] }),
+    }),
+  }),
 };
 
-// Initialize Firebase only if it hasn't been initialized already
-const firebaseApp = !getApps().length ? initializeApp(firebaseConfig) : getApps()[0];
+// Mock storage implementation
+const storage = {
+  ref: (_path: string) => ({
+    put: async () => ({
+      ref: {
+        getDownloadURL: async () => 'https://example.com/mock-file-url',
+      },
+    }),
+    delete: async () => {},
+    getDownloadURL: async () => 'https://example.com/mock-file-url',
+    listAll: async () => ({ items: [] }),
+  }),
+};
 
-// Initialize Firebase services
-const storage = getStorage(firebaseApp);
-const firestore = getFirestore(firebaseApp);
+console.log('Using mock Firebase client SDK');
 
-export { firebaseApp, storage, firestore }; 
+export { firestore, storage }; 

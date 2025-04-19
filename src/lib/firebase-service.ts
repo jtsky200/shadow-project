@@ -1,19 +1,5 @@
-import { 
-  doc, 
-  getDoc, 
-  getDocs, 
-  setDoc, 
-  addDoc, 
-  updateDoc, 
-  deleteDoc, 
-  query, 
-  where, 
-  orderBy, 
-  serverTimestamp
-} from 'firebase/firestore';
-import { ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
-import { firestore, storage } from './firebase';
-import * as collections from './firebase-collections';
+// This is a mock implementation of Firebase services
+// It provides the same interface but doesn't actually connect to Firebase
 
 // Type definitions
 export interface Manual {
@@ -86,160 +72,122 @@ export interface ChatMessage {
   timestamp?: Date;
 }
 
+// Mock data
+const mockManuals: Manual[] = [
+  {
+    id: "manual-1",
+    title: "2024 Cadillac Escalade Owner's Manual",
+    description: "Complete owner's manual for the 2024 Cadillac Escalade",
+    fileSize: "12.4MB",
+    pages: 423,
+    year: "2024",
+    model: "Escalade",
+    path: "/assets/manuals/escalade-2024",
+    downloadPath: "/assets/downloads/escalade-2024.pdf",
+    documentType: "manual",
+    createdAt: new Date("2023-12-15"),
+    updatedAt: new Date("2023-12-15"),
+  },
+  {
+    id: "manual-2",
+    title: "2024 Cadillac Lyriq User Guide",
+    description: "Complete guide for the 2024 Cadillac Lyriq EV",
+    fileSize: "14.2MB",
+    pages: 368,
+    year: "2024",
+    model: "Lyriq",
+    path: "/assets/manuals/lyriq-2024",
+    downloadPath: "/assets/downloads/lyriq-2024.pdf",
+    documentType: "manual",
+    createdAt: new Date("2023-12-10"),
+    updatedAt: new Date("2023-12-10"),
+  }
+];
+
+const mockCategories: TroubleshootingCategory[] = [
+  { id: "cat-1", title: "Battery & Charging", icon: "battery-charging", order: 1 },
+  { id: "cat-2", title: "Climate Control", icon: "thermometer", order: 2 },
+  { id: "cat-3", title: "Infotainment System", icon: "monitor", order: 3 }
+];
+
+const mockIssues: Record<string, TroubleshootingIssue[]> = {
+  "cat-1": [
+    {
+      id: "issue-1",
+      title: "Battery not charging",
+      description: "Vehicle battery will not charge when plugged in",
+      solutions: [
+        "Check if the charging cable is properly connected",
+        "Ensure the charging station is powered on",
+        "Check for any error messages on the dashboard"
+      ],
+      categoryId: "cat-1"
+    }
+  ],
+  "cat-2": [
+    {
+      id: "issue-2",
+      title: "AC not cooling",
+      description: "Air conditioning is not producing cold air",
+      solutions: [
+        "Check if the AC is turned on",
+        "Set the temperature to a lower setting",
+        "Make sure the vents are not blocked"
+      ],
+      categoryId: "cat-2"
+    }
+  ]
+};
+
 // ===== Manuals Service =====
 export const manualsService = {
   // Get all manuals
   async getAllManuals(): Promise<Manual[]> {
-    try {
-      const snapshot = await getDocs(query(
-        collections.manualsCollection,
-        orderBy('createdAt', 'desc')
-      ));
-      
-      return snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data(),
-        createdAt: doc.data().createdAt?.toDate(),
-        updatedAt: doc.data().updatedAt?.toDate()
-      } as Manual));
-    } catch (error) {
-      console.error('Error fetching manuals:', error);
-      return [];
-    }
+    return [...mockManuals];
   },
   
   // Get manual by ID
   async getManualById(id: string): Promise<Manual | null> {
-    try {
-      const docRef = doc(firestore, `manuals/${id}`);
-      const snapshot = await getDoc(docRef);
-      
-      if (snapshot.exists()) {
-        const data = snapshot.data();
-        return {
-          id: snapshot.id,
-          ...data,
-          createdAt: data.createdAt?.toDate(),
-          updatedAt: data.updatedAt?.toDate()
-        } as Manual;
-      }
-      
-      return null;
-    } catch (error) {
-      console.error(`Error fetching manual with id ${id}:`, error);
-      return null;
-    }
+    const manual = mockManuals.find(m => m.id === id);
+    return manual ? {...manual} : null;
   },
   
   // Get manuals by model
   async getManualsByModel(model: string): Promise<Manual[]> {
-    try {
-      const q = query(
-        collections.manualsCollection,
-        where('model', '==', model),
-        orderBy('createdAt', 'desc')
-      );
-      
-      const snapshot = await getDocs(q);
-      
-      return snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data(),
-        createdAt: doc.data().createdAt?.toDate(),
-        updatedAt: doc.data().updatedAt?.toDate()
-      } as Manual));
-    } catch (error) {
-      console.error(`Error fetching manuals for model ${model}:`, error);
-      return [];
-    }
+    return mockManuals.filter(m => m.model === model).map(m => ({...m}));
   }
 };
 
 // ===== Troubleshooting Service =====
-const troubleshootingService = {
+export const troubleshootingService = {
   // Get all categories
   async getAllCategories(): Promise<TroubleshootingCategory[]> {
-    try {
-      const snapshot = await getDocs(query(
-        collections.troubleshootingCategoriesCollection,
-        orderBy('order', 'asc')
-      ));
-      
-      return snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      } as TroubleshootingCategory));
-    } catch (error) {
-      console.error('Error fetching troubleshooting categories:', error);
-      return [];
-    }
+    return [...mockCategories];
   },
   
   // Get issues by category
   async getIssuesByCategory(categoryId: string): Promise<TroubleshootingIssue[]> {
-    try {
-      const issuesCollection = collections.getTroubleshootingIssuesCollection(categoryId);
-      const snapshot = await getDocs(issuesCollection);
-      
-      return snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data(),
-        categoryId
-      } as TroubleshootingIssue));
-    } catch (error) {
-      console.error(`Error fetching issues for category ${categoryId}:`, error);
-      return [];
-    }
+    return mockIssues[categoryId] ? [...mockIssues[categoryId]] : [];
   }
 };
-
-export { troubleshootingService };
 
 // ===== User Settings Service =====
 export const userSettingsService = {
   // Get user settings
   async getUserSettings(userId: string): Promise<UserSettings | null> {
-    try {
-      const docRef = doc(firestore, `users/${userId}/settings/preferences`);
-      const snapshot = await getDoc(docRef);
-      
-      if (snapshot.exists()) {
-        return {
-          userId,
-          ...snapshot.data()
-        } as UserSettings;
-      }
-      
-      // Return default settings if none exist
-      return {
-        userId,
-        theme: 'system',
-        fontSize: 16,
-        defaultModel: 'gpt-4',
-        notifications: true
-      };
-    } catch (error) {
-      console.error(`Error fetching settings for user ${userId}:`, error);
-      return null;
-    }
+    return {
+      userId,
+      theme: 'system',
+      fontSize: 16,
+      defaultModel: 'gpt-4',
+      notifications: true
+    };
   },
   
   // Save user settings
   async saveUserSettings(settings: UserSettings): Promise<boolean> {
-    try {
-      const { userId, ...data } = settings;
-      const docRef = doc(firestore, `users/${userId}/settings/preferences`);
-      
-      await setDoc(docRef, {
-        ...data,
-        updatedAt: serverTimestamp()
-      });
-      
-      return true;
-    } catch (error) {
-      console.error('Error saving user settings:', error);
-      return false;
-    }
+    console.log("Mock saving user settings:", settings);
+    return true;
   }
 };
 
@@ -247,242 +195,79 @@ export const userSettingsService = {
 export const documentsService = {
   // Get all documents
   async getAllDocuments(): Promise<UserDocument[]> {
-    try {
-      const snapshot = await getDocs(query(
-        collections.documentsCollection,
-        orderBy('createdAt', 'desc')
-      ));
-      
-      return snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data(),
-        createdAt: doc.data().createdAt?.toDate()
-      } as UserDocument));
-    } catch (error) {
-      console.error('Error fetching documents:', error);
-      return [];
-    }
+    return [];
   },
   
   // Get user documents
   async getUserDocuments(userId: string): Promise<UserDocument[]> {
-    try {
-      const userDocsCollection = collections.getUserDocumentsCollection(userId);
-      const snapshot = await getDocs(query(
-        userDocsCollection,
-        orderBy('createdAt', 'desc')
-      ));
-      
-      return snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data(),
-        createdAt: doc.data().createdAt?.toDate()
-      } as UserDocument));
-    } catch (error) {
-      console.error(`Error fetching documents for user ${userId}:`, error);
-      return [];
-    }
+    return [];
   },
   
   // Add document
   async addDocument(document: Omit<UserDocument, 'id'>): Promise<string | null> {
-    try {
-      const docRef = await addDoc(collections.documentsCollection, {
-        ...document,
-        createdAt: serverTimestamp()
-      });
-      
-      return docRef.id;
-    } catch (error) {
-      console.error('Error adding document:', error);
-      return null;
-    }
+    console.log("Mock adding document:", document);
+    return "mock-document-id";
   },
   
   // Delete document
   async deleteDocument(id: string): Promise<boolean> {
-    try {
-      await deleteDoc(doc(firestore, `documents/${id}`));
-      return true;
-    } catch (error) {
-      console.error(`Error deleting document with id ${id}:`, error);
-      return false;
-    }
-  }
-};
-
-// ===== Library/Content History Service =====
-export const libraryService = {
+    console.log("Mock deleting document:", id);
+    return true;
+  },
+  
   // Get user library items
   async getUserLibraryItems(userId: string): Promise<LibraryItem[]> {
-    try {
-      const libraryCollection = collections.getUserLibraryCollection(userId);
-      const snapshot = await getDocs(query(
-        libraryCollection,
-        orderBy('date', 'desc')
-      ));
-      
-      return snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data(),
-        date: doc.data().date?.toDate()
-      } as LibraryItem));
-    } catch (error) {
-      console.error(`Error fetching library items for user ${userId}:`, error);
-      return [];
-    }
+    return [];
   },
   
   // Add library item
   async addLibraryItem(item: Omit<LibraryItem, 'id'>): Promise<string | null> {
-    try {
-      const { userId } = item;
-      const libraryCollection = collections.getUserLibraryCollection(userId);
-      
-      const docRef = await addDoc(libraryCollection, {
-        ...item,
-        date: serverTimestamp()
-      });
-      
-      return docRef.id;
-    } catch (error) {
-      console.error('Error adding library item:', error);
-      return null;
-    }
+    console.log("Mock adding library item:", item);
+    return "mock-library-item-id";
   },
   
-  // Toggle favorite status
+  // Toggle favorite
   async toggleFavorite(userId: string, itemId: string, isFavorite: boolean): Promise<boolean> {
-    try {
-      const docRef = doc(firestore, `users/${userId}/library/${itemId}`);
-      await updateDoc(docRef, { favorite: isFavorite });
-      return true;
-    } catch (error) {
-      console.error(`Error toggling favorite status for item ${itemId}:`, error);
-      return false;
-    }
+    console.log(`Mock toggling favorite for item ${itemId} to ${isFavorite}`);
+    return true;
   },
   
   // Delete library item
   async deleteLibraryItem(userId: string, itemId: string): Promise<boolean> {
-    try {
-      await deleteDoc(doc(firestore, `users/${userId}/library/${itemId}`));
-      return true;
-    } catch (error) {
-      console.error(`Error deleting library item ${itemId}:`, error);
-      return false;
-    }
-  }
-};
-
-// ===== File Upload Service =====
-export const fileService = {
-  // Client-side upload file to Firebase Storage
-  async uploadFile(
-    file: File, 
-    path: string
-  ): Promise<string> {
-    const storageRef = ref(storage, path);
-    
-    return new Promise((resolve, reject) => {
-      const uploadTask = uploadBytes(storageRef, file);
-      
-      uploadTask
-        .then(async (snapshot) => {
-          // Get download URL after upload completes
-          const downloadURL = await getDownloadURL(snapshot.ref);
-          resolve(downloadURL);
-        })
-        .catch((error) => {
-          console.error('Upload error:', error);
-          reject(error);
-        });
-    });
+    console.log(`Mock deleting library item ${itemId} for user ${userId}`);
+    return true;
   },
   
-  // Server-side upload through API endpoint (more secure)
+  // Upload file
+  async uploadFile(file: File, path: string): Promise<string> {
+    console.log(`Mock uploading file ${file.name} to ${path}`);
+    return "https://example.com/mock-upload-url";
+  },
+  
+  // Upload file via API
   async uploadFileViaApi(file: File): Promise<{ url: string; path: string; }> {
-    try {
-      const formData = new FormData();
-      formData.append('file', file);
-      
-      const response = await fetch('/api/upload', {
-        method: 'POST',
-        body: formData,
-      });
-      
-      if (!response.ok) {
-        throw new Error(`Upload failed: ${response.statusText}`);
-      }
-      
-      const result = await response.json();
-      return { 
-        url: result.url, 
-        path: result.path 
-      };
-    } catch (error) {
-      console.error('Error uploading file via API:', error);
-      throw error;
-    }
+    console.log(`Mock uploading file ${file.name} via API`);
+    return {
+      url: "https://example.com/mock-upload-url",
+      path: `/uploads/mock-${file.name}`
+    };
   },
   
-  // Delete file from Firebase Storage
+  // Delete file
   async deleteFile(path: string): Promise<boolean> {
-    try {
-      const fileRef = ref(storage, path);
-      await deleteObject(fileRef);
-      return true;
-    } catch (error) {
-      console.error(`Error deleting file at path ${path}:`, error);
-      return false;
-    }
-  }
-};
-
-// ===== Chat Service =====
-export const chatService = {
-  // Save chat messages to Firestore
-  async saveChatMessages(sessionId: string, messages: ChatMessage[]): Promise<boolean> {
-    try {
-      // Call our API endpoint to save the chat using Firebase Admin SDK
-      const response = await fetch('/api/chat/save', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          sessionId,
-          messages,
-        }),
-      });
-      
-      if (!response.ok) {
-        throw new Error(`Error saving chat: ${response.statusText}`);
-      }
-      
-      return true;
-    } catch (error) {
-      console.error('Error saving chat messages:', error);
-      return false;
-    }
+    console.log(`Mock deleting file at ${path}`);
+    return true;
   },
   
-  // Get chat history from Firestore
+  // Save chat messages
+  async saveChatMessages(sessionId: string, messages: ChatMessage[]): Promise<boolean> {
+    console.log(`Mock saving chat messages for session ${sessionId}`);
+    return true;
+  },
+  
+  // Get chat history
   async getChatHistory(sessionId: string): Promise<ChatMessage[]> {
-    try {
-      const docRef = doc(firestore, `cadillac-chat/${sessionId}`);
-      const snapshot = await getDoc(docRef);
-      
-      if (snapshot.exists()) {
-        const data = snapshot.data();
-        return data.messages || [];
-      }
-      
-      return [];
-    } catch (error) {
-      console.error(`Error fetching chat history for session ${sessionId}:`, error);
-      return [];
-    }
+    return [];
   }
 };
 
@@ -492,9 +277,9 @@ const services = {
   troubleshooting: troubleshootingService,
   userSettings: userSettingsService,
   documents: documentsService,
-  library: libraryService,
-  files: fileService,
-  chat: chatService
+  library: documentsService,
+  files: documentsService,
+  chat: documentsService
 };
 
 export { services }; 

@@ -1,50 +1,49 @@
-import { ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
-import { storage } from './firebase';
+// This is a mock implementation of file upload functionality
+// It doesn't actually use Firebase Storage
 
 /**
- * Upload a file to Firebase Storage
- * @param file The file to upload
- * @param path The path in storage where the file should be saved
- * @param onProgress Optional callback function for upload progress
- * @returns Promise that resolves with the download URL
+ * Mock file upload that returns a fake URL
  */
-export async function uploadFile(
-  file: File,
+export async function uploadFile(file: File, path: string): Promise<string> {
+  console.log(`Mock uploading file ${file.name} to ${path}`);
+  return `https://example.com/mock-files/${path}/${file.name}`;
+}
+
+/**
+ * Mock file upload progress tracker
+ */
+export async function uploadFileWithProgress(
+  file: File, 
   path: string,
-  onProgress?: (progress: number) => void
+  onProgress: (progress: number) => void
 ): Promise<string> {
-  const storageRef = ref(storage, path);
+  // Simulate upload progress
+  let progress = 0;
+  const interval = setInterval(() => {
+    progress += 10;
+    onProgress(progress);
+    if (progress >= 100) {
+      clearInterval(interval);
+    }
+  }, 300);
   
-  return new Promise((resolve, reject) => {
-    const uploadTask = uploadBytesResumable(storageRef, file);
-    
-    // Register three observers:
-    // 1. 'state_changed' observer, called any time the state changes
-    // 2. Error observer, called on failure
-    // 3. Completion observer, called on successful completion
-    uploadTask.on(
-      'state_changed',
-      (snapshot) => {
-        // Get task progress, including the number of bytes uploaded and the total number of bytes to be uploaded
-        const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-        if (onProgress) {
-          onProgress(progress);
-        }
-        console.log('Upload is ' + progress + '% done');
-      },
-      (error) => {
-        // A full list of error codes is available at
-        // https://firebase.google.com/docs/storage/web/handle-errors
-        console.error('Upload error:', error);
-        reject(error);
-      },
-      async () => {
-        // Upload completed successfully, now we can get the download URL
-        const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
-        resolve(downloadURL);
-      }
-    );
-  });
+  // Wait 3 seconds to simulate upload time
+  await new Promise(resolve => setTimeout(resolve, 3000));
+  
+  return `https://example.com/mock-files/${path}/${file.name}`;
+}
+
+/**
+ * Format file size in human-readable format
+ */
+export function formatFileSize(bytes: number): string {
+  if (bytes === 0) return '0 Bytes';
+  
+  const k = 1024;
+  const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
 }
 
 /**

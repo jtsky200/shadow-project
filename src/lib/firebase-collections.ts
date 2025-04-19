@@ -1,37 +1,56 @@
-import { collection } from 'firebase/firestore';
-import { firestore } from './firebase';
+// This is a mock implementation of the Firebase collections
+// It doesn't actually connect to Firebase, just provides the expected interface
 
-// User collections
-export const usersCollection = collection(firestore, 'users');
+// Mock collection reference creator
+const createCollection = (name: string) => ({ id: name, path: name });
+const createSubcollection = (parentPath: string, name: string) => ({ 
+  id: name, 
+  path: `${parentPath}/${name}` 
+});
+
+// Create mock collections
+export const users = createCollection('users');
+export const manuals = createCollection('manuals');
+export const chats = createCollection('chats');
+export const documents = createCollection('documents');
+export const troubleshooting = createCollection('troubleshooting');
+export const settings = createCollection('settings');
+export const uploads = createCollection('uploads');
+export const chatHistory = createCollection('chat-history');
+
+// Mock collection functions
+export const usersCollection = createCollection('users');
 export const getUserDoc = (userId: string) => `users/${userId}`;
-export const getUserSettingsCollection = (userId: string) => collection(firestore, `users/${userId}/settings`);
+export const getUserSettingsCollection = (userId: string) => 
+  createSubcollection(`users/${userId}`, 'settings');
 
-// Document collections
-export const documentsCollection = collection(firestore, 'documents');
-export const getUserDocumentsCollection = (userId: string) => collection(firestore, `users/${userId}/documents`);
+// User subcollections helpers
+export const getUserDocumentsCollection = (userId: string) => 
+  createSubcollection(`users/${userId}`, 'documents');
 
-// Chat history collections
-export const chatHistoryCollection = collection(firestore, 'chatHistory');
-export const getUserChatCollection = (userId: string) => collection(firestore, `users/${userId}/chats`);
+export const getUserChatCollection = (userId: string) => 
+  createSubcollection(`users/${userId}`, 'chats');
 
 // Manual collections
-export const manualsCollection = collection(firestore, 'manuals');
-export const manualSectionsCollection = (manualId: string) => collection(firestore, `manuals/${manualId}/sections`);
+export const manualSectionsCollection = (manualId: string) => 
+  createSubcollection(`manuals/${manualId}`, 'sections');
 
 // Troubleshooting collections
-export const troubleshootingCollection = collection(firestore, 'troubleshooting');
-export const troubleshootingCategoriesCollection = collection(firestore, 'troubleshooting/categories/items');
-export const getTroubleshootingIssuesCollection = (categoryId: string) => 
-  collection(firestore, `troubleshooting/categories/items/${categoryId}/issues`);
+export const troubleshootingCategoriesCollection = 
+  createSubcollection('troubleshooting', 'categories');
+
+export const getTroubleshootingIssuesCollection = (categoryId: string) =>
+  createSubcollection(`troubleshooting/categories/${categoryId}`, 'issues');
 
 // Library/history collections
-export const contentLibraryCollection = collection(firestore, 'contentLibrary');
-export const getUserLibraryCollection = (userId: string) => collection(firestore, `users/${userId}/library`);
+export const contentLibraryCollection = createCollection('contentLibrary');
+export const getUserLibraryCollection = (userId: string) => 
+  createSubcollection(`users/${userId}`, 'library');
 
 // System collections
-export const systemUpdatesCollection = collection(firestore, 'systemUpdates');
-export const vehicleModelsCollection = collection(firestore, 'vehicleModels');
-export const specificationsCollection = collection(firestore, 'specifications');
+export const systemUpdatesCollection = createCollection('systemUpdates');
+export const vehicleModelsCollection = createCollection('vehicleModels');
+export const specificationsCollection = createCollection('specifications');
 
 // File storage paths
 export const STORAGE_PATHS = {
